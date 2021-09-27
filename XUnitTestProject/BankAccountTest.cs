@@ -19,7 +19,7 @@ namespace XUnitTestProject
             // assert
             Assert.Equal(accNumber, acc.AccountNumber);
             Assert.Equal(0.0, acc.Balance);
-            Assert.Equal(BankAccount.DEFAULT_INTEREST_RATE, acc.InterestRate);
+            Assert.Equal(BankAccount.DEFAULT_INTERESTRATE, acc.InterestRate);
         }
 
         [Theory]
@@ -47,7 +47,7 @@ namespace XUnitTestProject
 
             Assert.Equal(accNumber, acc.AccountNumber);
             Assert.Equal(initialBalance, acc.Balance);
-            Assert.Equal(BankAccount.DEFAULT_INTEREST_RATE, acc.InterestRate);
+            Assert.Equal(BankAccount.DEFAULT_INTERESTRATE, acc.InterestRate);
         }
 
         [Fact]
@@ -85,7 +85,7 @@ namespace XUnitTestProject
             var ex = Assert.Throws<ArgumentException>(() => acc = new BankAccount(1, 2, initialInterestRate));
 
             Assert.Null(acc);
-            Assert.Equal("Interest rate must be between 0.00 - 0.10", ex.Message);
+            Assert.Equal("Interest Rate must be between [0.00 - 0.10]", ex.Message);
         }
 
         [Theory]
@@ -110,85 +110,7 @@ namespace XUnitTestProject
             var ex = Assert.Throws<ArgumentException>(() => acc.InterestRate = newInterestRate);
 
             Assert.Equal(oldInterestRate, acc.InterestRate);
-            Assert.Equal("Interest rate must be between 0.00 - 0.10", ex.Message);
+            Assert.Equal("Interest Rate must be between [0.00 - 0.10]", ex.Message);
         }
-
-        [Fact]
-        public void DepositValidAmount()
-        {
-            double initialBalance = 1234.56;
-            double amount = 123.45;
-
-            IBankAccount acc = new BankAccount(1, initialBalance);
-
-            acc.Deposit(amount);
-
-            Assert.Equal(initialBalance + amount, acc.Balance);
-
-        }
-
-        [Fact]
-        public void DepositInvalidAmountExpectArgumentException()
-        {
-            double initialBalance = 123.45;
-
-            IBankAccount acc = new BankAccount(1, initialBalance);
-
-            var ex = Assert.Throws<ArgumentException>(() => acc.Deposit(-0.01));
-
-            Assert.Equal(initialBalance, acc.Balance);
-            Assert.Equal("Amount to deposit cannot be negative", ex.Message);
-        }
-
-        [Theory]
-        [InlineData(123.45, 0.00)]
-        [InlineData(123.45, 100.00)]
-        [InlineData(123.45, 123.45)]
-        public void WithdrawValidAmount(double initialBalance, double amount)
-        {
-            IBankAccount acc = new BankAccount(1, initialBalance);
-
-            acc.Withdraw(amount);
-
-            Assert.Equal(initialBalance - amount, acc.Balance);
-        }
-
-        [Fact]
-        public void WithdrawNegativeAmountExpectArgumentException()
-        {
-            double initialBalance = 123.45;
-
-            IBankAccount acc = new BankAccount(1, initialBalance);
-
-            var ex = Assert.Throws<ArgumentException>(() => acc.Withdraw(-0.01));
-
-            Assert.Equal(initialBalance, acc.Balance);
-            Assert.Equal("Amount to withdraw cannot be negative", ex.Message);
-        }
-
-        [Fact]
-        public void WithdrawAmountExceedingBalanceExpectArgumentException()
-        {
-            double initialBalance = 123.45;
-
-            IBankAccount acc = new BankAccount(1, initialBalance);
-
-            var ex = Assert.Throws<ArgumentException>(() => acc.Withdraw(initialBalance + 0.01));
-
-            Assert.Equal(initialBalance, acc.Balance);
-            Assert.Equal("Amount to withdraw cannot exceed the balance", ex.Message);
-        }
-
-        [Fact]
-        public void AddInterest()
-        {
-            IBankAccount acc = new BankAccount(1, 123.45);
-            double expectedBalance = 123.45 * (1 + acc.InterestRate);
-
-            acc.AddInterest();
-
-            Assert.Equal(expectedBalance, acc.Balance);
-        }
-
     }
 }

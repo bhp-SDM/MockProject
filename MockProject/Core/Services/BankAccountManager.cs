@@ -1,7 +1,5 @@
 ﻿using MockProject.Core.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MockProject.Core.Services
 {
@@ -9,6 +7,13 @@ namespace MockProject.Core.Services
     {
         private IRepository<int, IBankAccount> accounts;
 
+        public int Count 
+        { 
+            get
+            {
+                return accounts.Count;
+            }
+        }
         public BankAccountManager(IRepository<int, IBankAccount> repo)
         {
             this.accounts = repo ?? throw new ArgumentException("Missing BankAccount Repository");
@@ -20,7 +25,10 @@ namespace MockProject.Core.Services
             {
                 throw new ArgumentException("Bank account cannot be null");
             }
-
+            if (accounts.GetByID(acc.AccountNumber) != null)
+            { 
+                throw new ArgumentException("Bank Account already exist");
+            }
             accounts.Add(acc);
         }
     }

@@ -3,43 +3,18 @@ using MockProject.Core.Model;
 using MockProject.Core.Services;
 using Moq;
 using System;
-using System.Collections.Generic;
 using Xunit;
 
 namespace XUnitTestProject
 {
-    public class BankAccountMangerTest
+    public class BankAccountManagerTest_BehaviorBased
     {
-        // Fake store for repository
-        private Dictionary<int, IBankAccount> dataStore;
-
         private Mock<IRepository<int, IBankAccount>> repoMock;
 
-        public BankAccountMangerTest()
+        public BankAccountManagerTest_BehaviorBased()
         {
-            // Fake data store for the repository mock object
-            dataStore = new Dictionary<int, IBankAccount>();
-
             // setting up the mock
-            repoMock = new Mock<IRepository<int, IBankAccount>>();
-            
-            // prepare properties to contain values
-            repoMock.SetupAllProperties();
-
-            // redirect methods of the mock to use the fake data store
-            repoMock.SetupGet(x => x.Count).Returns(dataStore.Count);
-            
-            repoMock.Setup(x => x.Add(It.IsAny<IBankAccount>())).Callback<IBankAccount>((acc) =>
-                dataStore.Add(acc.AccountNumber, acc));
-            
-            repoMock.Setup(x => x.Remove(It.IsAny<IBankAccount>())).Callback<IBankAccount>((acc) =>
-                dataStore.Remove(acc.AccountNumber));
-            
-            repoMock.Setup(x => x.GetByID(It.IsAny<int>())).Returns<int>((accNum) => 
-                dataStore.ContainsKey(accNum) ? dataStore[accNum] : null);
-            
-            // there was a bug here - fixed now
-            repoMock.Setup(x => x.GetAll()).Returns(() => new List<IBankAccount>(dataStore.Values));
+            repoMock = new Mock<IRepository<int, IBankAccount>>();            
         }
 
         [Fact]
@@ -47,9 +22,13 @@ namespace XUnitTestProject
         {
             IRepository<int, IBankAccount> repo = repoMock.Object;
 
-            BankAccountManager bam = new BankAccountManager(repo);
+            BankAccountManager bam = null;
+            
+            bam = new BankAccountManager(repo);
 
-            Assert.Empty(dataStore);
+            Assert.NotNull(bam);
+            Assert.True(bam is BankAccountManager);
+            Assert.Equal(0, bam.Count);
         }
 
         [Fact]
@@ -70,14 +49,14 @@ namespace XUnitTestProject
 
             IBankAccount acc = new BankAccount(1);
 
+            // account with account number = 1 does not exist in the repository
+            repoMock.Setup(x => x.GetByID(1)).Returns(() => null);
+            
             IRepository<int, IBankAccount> repo = repoMock.Object;
             BankAccountManager bam = new BankAccountManager(repo);
 
             // act
             bam.AddBankAccount(acc);
-
-            Assert.True(dataStore.Count == 1);
-            Assert.Equal(acc, dataStore[1]);
 
             repoMock.Verify(repo => repo.Add(acc), Times.Once);
         }
@@ -93,6 +72,23 @@ namespace XUnitTestProject
 
             Assert.Equal("Bank account cannot be null", ex.Message);
             repoMock.Verify(repo => repo.Add(null), Times.Never);
+        }
+
+        [Fact]
+        public void AddBankAccountAlreadyExistsExpectArgumentException()
+        {
+            IBankAccount acc = new BankAccount(1);
+            
+            // Bank account with account number = 1 already exists in the repository
+            repoMock.Setup(x => x.GetByID(1)).Returns(() => acc);
+            
+            IRepository<int, IBankAccount> repo = repoMock.Object;
+            BankAccountManager bam = new BankAccountManager(repo);
+
+            var ex = Assert.Throws<ArgumentException>(() => bam.AddBankAccount(acc));
+
+            Assert.Equal("Bank Account already exist", ex.Message);            
+            repoMock.Verify(repo => repo.Add(acc), Times.Never);
         }
     }
 }
